@@ -1,12 +1,39 @@
-import { View, Text, Image, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, Image, ScrollView, SafeAreaView, TouchableOpacity, FlatList } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { ScanButton } from '../components/ScanButton';
 import { NutritionStats } from '../components/Nutrition/NutritionStats';
 import { NutritionStat } from '../components/Nutrition/NutritionStats';
-
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../store';
+import { setCurrentImage } from '../store/imagesSlice';
+import { useState, useEffect } from 'react';
+import { addLoadingListener, removeLoadingListener } from '../services/geminiService';
 
 export function HubScreen() {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const { images } = useSelector((state: RootState) => state.images);
+  const [isGeminiLoading, setIsGeminiLoading] = useState(false);
+  
+  // Set up listener for Gemini loading state
+  useEffect(() => {
+    // Create a handler function for loading state changes
+    const handleLoadingChange = (isLoading: boolean) => {
+      setIsGeminiLoading(isLoading);
+    };
+    
+    // Register the handler
+    addLoadingListener(handleLoadingChange);
+    
+    // Cleanup: remove the listener when component unmounts
+    return () => {
+      removeLoadingListener(handleLoadingChange);
+    };
+  }, []);
+  
   // Define nutrition stats data
   const nutritionStats: NutritionStat[] = [
     { type: 'iron', value: '19g' },
@@ -16,9 +43,30 @@ export function HubScreen() {
     { type: 'fiber', value: '22g' }
   ];
 
+  const handleScanPress = () => {
+    navigation.navigate('Camera' as never);
+  };
+
+  const handleImagePress = (uri: string) => {
+    const image = images.find(img => img.uri === uri);
+    if (image) {
+      dispatch(setCurrentImage(image));
+      // Navigate to food details screen
+      navigation.navigate('FoodDetails' as never);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-lime-100">
       <StatusBar style="dark" />
+      
+      {/* Loading overlay for Gemini API calls */}
+      {isGeminiLoading && (
+        <View className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
+          <LoadingSpinner text="Analyzing with Gemini..." color="#48bb78" />
+        </View>
+      )}
+      
       <ScrollView className="flex-1">
         {/* Header */}
         <View className="flex-row items-center px-4 pt-2">
@@ -59,11 +107,49 @@ export function HubScreen() {
           </View>
         </View>
 
+        {/* Images Gallery */}
+        {images.length > 0 && (
+          <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-md">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="font-bold text-gray-700">Recent Captures</Text>
+              <Text className="text-blue-500 text-sm">{images.length} {images.length === 1 ? 'image' : 'images'}</Text>
+            </View>
+            
+            <FlatList
+              data={images}
+              keyExtractor={(item) => item.uri}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  onPress={() => handleImagePress(item.uri)}
+                  className="mr-3"
+                >
+                  <Image 
+                    source={{ uri: item.uri }}
+                    className="w-24 h-24 rounded-lg"
+                  />
+                  <View className="absolute top-1 right-1 bg-black/50 rounded-full p-1">
+                    <Ionicons 
+                      name={item.type === 'captured' ? 'camera' : 'images'} 
+                      size={12} 
+                      color="white" 
+                    />
+                  </View>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <Text className="text-gray-500 italic">No images captured yet</Text>
+              }
+            />
+          </View>
+        )}
+
         {/* Nutrition Stats Component */}
         <NutritionStats stats={nutritionStats} />
 
         {/* Scan Button Component */}
-        <ScanButton onPress={() => console.log('Scan button pressed')} />
+        <ScanButton onPress={handleScanPress} />
 
         {/* Active Quest */}
         <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-md">
