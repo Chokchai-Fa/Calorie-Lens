@@ -89,11 +89,11 @@ const FoodDetailsScreen = () => {
             <View key={index} className="flex-row items-center mb-2">
               <View className="h-2 w-2 rounded-full bg-gray-400 mr-2" />
               <Text className="text-gray-800 flex-1">{ingredient}</Text>
-              {foodDetails.caloriesPerIngredient && foodDetails.caloriesPerIngredient[ingredient] && (
-                <Text className="text-gray-500">
-                  ({foodDetails.caloriesPerIngredient[ingredient]} cal)
-                </Text>
-              )}
+              {foodDetails.caloriesPerIngredient && foodDetails.caloriesPerIngredient[ingredient] ? (
+              <Text className="text-gray-500">
+                ({foodDetails.caloriesPerIngredient[ingredient]} cal)
+              </Text>
+              ) : null}
             </View>
           ))}
         </Card>
