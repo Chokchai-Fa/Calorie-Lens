@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { addImage, setCurrentImage, removeTrackedFood } from "../store/imagesSlice"
 import ImageConfirmationComponent from "../components/ImageConfirmation"
 import { format } from "date-fns"
+import { getTimeAgo } from "../utils/time"
 
 // Food Item Component for Common Foods
 const FoodItem = ({ name, serving, calories, onAdd }: { name: string; serving: string; calories: number; onAdd: () => void }) => (
@@ -81,21 +82,6 @@ const TrackFoodScreen = () => {
   
   // Get tracked food items from the Redux store
   const { images } = useSelector((state: any) => state.images)
-
-  // Format date for display
-  const getTimeAgo = (timestamp: number) => {
-    const now = Date.now()
-    const diffInMinutes = Math.floor((now - timestamp) / (1000 * 60))
-    
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`
-    } else if (diffInMinutes < 1440) {
-      const hours = Math.floor(diffInMinutes / 60)
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`
-    } else {
-      return format(timestamp, 'MMM d, h:mm a')
-    }
-  }
 
   // Get recently tracked items with food details
   const recentlyTracked = useMemo(() => {

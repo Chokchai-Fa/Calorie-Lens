@@ -3,15 +3,44 @@ import { Ionicons } from "@expo/vector-icons"
 import ProgressCircle from "components/ProgressCircle";
 import FoodLogItem from "components/FoodLogItem"
 import Card from "components/Card"
-
-
+import { useSelector } from "react-redux"
+import { 
+  MealType, 
+  MealData,
+  FoodItem,
+  categorizeMealByTime, 
+  organizeMealsByType, 
+  sortMealsByOrder, 
+  getDefaultFoodLogData 
+} from "../utils/meal";
 
 const DashboardScreen = () => {
+  // Get tracked food images from Redux store
+  const { images } = useSelector((state: any) => state.images);
+  
+  // Get only tracked food items
+  const trackedFoodItems = images.filter((image: any) => 
+    image.isTracked === true && image.foodDetails
+  );
+  
+  // Organize tracked food items into meal categories
+  const organizedMeals = organizeMealsByType(trackedFoodItems);
+  
+  // Convert organized meals object to array for rendering
+  const foodLogData = Object.values(organizedMeals) as MealData[];
+  const sortedFoodLogData = sortMealsByOrder(foodLogData);
+  
+  // Calculate total calories consumed today
+  const totalCalories = sortedFoodLogData.reduce((sum, meal) => sum + meal.totalCalories, 0);
+
+  // Calculate progress percentage for calories
+  const caloriesPercentage = Math.min(Math.round((totalCalories / 2000) * 100), 100);
+  
   const progressData = [
     {
-      percentage: 73,
+      percentage: caloriesPercentage,
       label: "Calories",
-      current: 1450,
+      current: totalCalories,
       target: 2000,
       unit: "kcal",
       color: "#EF4444",
@@ -32,45 +61,8 @@ const DashboardScreen = () => {
       unit: "g",
       color: "#F59E0B",
     },
-  ]
+  ];
 
-  const foodLogData = [
-    {
-      time: "08:30 AM",
-      meal: "Breakfast",
-      totalCalories: 400,
-      items: [
-        { name: "Oatmeal with Banana", calories: 260 },
-        { name: "Greek Yogurt", calories: 140 },
-      ],
-    },
-    {
-      time: "12:30 PM",
-      meal: "Lunch",
-      totalCalories: 470,
-      items: [
-        { name: "Chicken Salad", calories: 350 },
-        { name: "Whole Grain Bread", calories: 120 },
-      ],
-    },
-    {
-      time: "04:00 PM",
-      meal: "Snack",
-      totalCalories: 255,
-      items: [
-        { name: "Apple", calories: 95 },
-        { name: "Almonds", calories: 160 },
-      ],
-    },
-    {
-      time: "07:30 PM",
-      meal: "Dinner",
-      totalCalories: 325,
-      items: [{ name: "Grilled Salmon", calories: 325 }],
-    },
-  ]
-
-  const totalCalories = foodLogData.reduce((sum, meal) => sum + meal.totalCalories, 0)
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
@@ -107,15 +99,21 @@ const DashboardScreen = () => {
             </View>
           }
         >
-          {foodLogData.map((meal, index) => (
-            <FoodLogItem
-              key={index}
-              time={meal.time}
-              meal={meal.meal}
-              items={meal.items}
-              totalCalories={meal.totalCalories}
-            />
-          ))}
+          {sortedFoodLogData.length > 0 ? (
+            sortedFoodLogData.map((meal, index) => (
+              <FoodLogItem
+                key={index}
+                time={meal.time}
+                meal={meal.meal}
+                items={meal.items}
+                totalCalories={meal.totalCalories}
+              />
+            ))
+          ) : (
+            <Text className="text-gray-500 italic text-center py-4">
+              No food items tracked today. Start by adding food from the Track Food tab.
+            </Text>
+          )}
         </Card>
 
         {/* Success Message */}
@@ -126,7 +124,11 @@ const DashboardScreen = () => {
             </View>
             <View className="flex-1">
               <Text className="text-base font-semibold text-green-800">You're doing great!</Text>
-              <Text className="text-sm text-green-600">You've met your protein goal for today.</Text>
+              <Text className="text-sm text-green-600">
+                {trackedFoodItems.length > 0 
+                  ? `You've logged ${trackedFoodItems.length} food items today.` 
+                  : "Start tracking your food to reach your goals."}
+              </Text>
             </View>
           </View>
         </Card>
