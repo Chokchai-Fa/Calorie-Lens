@@ -13,6 +13,8 @@ interface Image {
   uri: string;
   timestamp: number;
   type: 'captured' | 'picked';
+  foodDetails?: FoodDetails;
+  isTracked?: boolean;
 }
 
 interface ImagesState {
@@ -72,6 +74,43 @@ const imagesSlice = createSlice({
       state.foodDetails = null;
       state.analysisError = null;
     },
+    trackFood: (state) => {
+      if (state.currentImage && state.foodDetails) {
+        // Find the current image in the images array
+        const imageIndex = state.images.findIndex(img => 
+          img.uri === state.currentImage?.uri && 
+          img.timestamp === state.currentImage?.timestamp
+        );
+        
+        if (imageIndex !== -1) {
+          // Add food details to the image and mark as tracked
+          state.images[imageIndex] = {
+            ...state.images[imageIndex],
+            foodDetails: state.foodDetails,
+            isTracked: true
+          };
+        }
+      }
+    },
+    removeTrackedFood: (state, action: PayloadAction<number | undefined>) => {
+      if (action.payload) {
+        // If a timestamp is provided, remove that specific food item
+        state.images = state.images.filter(image => image.timestamp !== action.payload);
+      } else if (state.currentImage) {
+        // Otherwise remove the current image if no timestamp provided
+        state.images = state.images.filter(img => 
+          !(img.uri === state.currentImage?.uri && img.timestamp === state.currentImage?.timestamp)
+        );
+        
+        // Also update the current image to indicate it's not tracked anymore
+        if (state.currentImage) {
+          state.currentImage = {
+            ...state.currentImage,
+            isTracked: false
+          };
+        }
+      }
+    },
   },
 });
 
@@ -84,7 +123,9 @@ export const {
   startFoodAnalysis,
   setFoodDetails,
   setAnalysisError,
-  clearFoodDetails
+  clearFoodDetails,
+  trackFood,
+  removeTrackedFood
 } = imagesSlice.actions;
 
 export default imagesSlice.reducer;

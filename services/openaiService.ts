@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { notifyLoadingChange } from '../hooks/useLoading';
 
 // You'll need to replace this with your actual API key
 // Consider using environment variables for production
@@ -12,37 +13,6 @@ interface FoodAnalysisResult {
   name: string;
   ingredients: string[];
   calories: number;
-}
-
-// Create a type for loading state listeners
-type LoadingListener = (isLoading: boolean) => void;
-
-// Array to store loading state listeners
-const loadingListeners: LoadingListener[] = [];
-
-// Function to notify all listeners about loading state changes
-function notifyLoadingChange(isLoading: boolean) {
-  console.log(`Loading state changed to: ${isLoading}`);
-  loadingListeners.forEach(listener => listener(isLoading));
-}
-
-// Function to add a loading state listener
-export function addLoadingListener(listener: LoadingListener) {
-  console.log('Adding loading listener');
-  loadingListeners.push(listener);
-  console.log(`Total listeners: ${loadingListeners.length}`);
-}
-
-// Function to remove a loading state listener
-export function removeLoadingListener(listener: LoadingListener) {
-  console.log('Removing loading listener');
-  const index = loadingListeners.indexOf(listener);
-  if (index !== -1) {
-    loadingListeners.splice(index, 1);
-    console.log(`Total listeners after removal: ${loadingListeners.length}`);
-  } else {
-    console.log('Listener not found');
-  }
 }
 
 export async function analyzeFoodImage(base64Image: string): Promise<FoodAnalysisResult> {

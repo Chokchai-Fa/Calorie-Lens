@@ -8,12 +8,15 @@ import { store } from './store';
 
 import './global.css';
 
-import { HubScreen } from './screens/HubScreen';
-import { QuestsScreen } from './screens/QuestsScreen';
-import { LogbookScreen } from './screens/LogbookScreen';
-import { CharacterScreen } from './screens/CharacterScreen';
-import { CameraScreen } from './screens/CameraScreen';
-import { FoodDetailsScreen } from './screens/FoodDetailsScreen';
+import DashboardScreen from './screens/DashboardScreen';
+import TrackFoodScreen from 'screens/TrackFoodScreen';
+import SugesstionScreen from 'screens/SuggestionScreen';
+import ReminderScreen from 'screens/ReminderScreen';
+import SettingScreen from 'screens/SettingScreen';
+
+
+import CameraScreen from './screens/CameraScreen';
+import FoodDetailsScreen from './screens/FoodDetailsScreen';
 
 // Create stack and tab navigators
 const Tab = createBottomTabNavigator();
@@ -27,14 +30,16 @@ function TabNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home';
 
-          if (route.name === 'Hub') {
+          if (route.name === 'Dashboard') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Quests') {
-            iconName = focused ? 'list' : 'list-outline';
-          } else if (route.name === 'Logbook') {
-            iconName = focused ? 'book' : 'book-outline';
-          } else if (route.name === 'Character') {
-            iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'TrackFood') {
+            iconName = focused ? 'fast-food' : 'fast-food-outline';
+          } else if (route.name === 'Suggestion') {
+            iconName = focused ? 'bulb' : 'bulb-outline';
+          } else if (route.name === 'Reminder') {
+            iconName = focused ? 'notifications' : 'notifications-outline';
+          } else if (route.name === 'Setting') {
+            iconName = focused ? 'settings' : 'settings-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -43,10 +48,11 @@ function TabNavigator() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Hub" component={HubScreen} />
-      <Tab.Screen name="Quests" component={QuestsScreen} />
-      <Tab.Screen name="Logbook" component={LogbookScreen} />
-      <Tab.Screen name="Character" component={CharacterScreen} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="TrackFood" component={TrackFoodScreen} />
+      <Tab.Screen name="Suggestion" component={SugesstionScreen} />
+      <Tab.Screen name="Reminder" component={ReminderScreen} />
+      <Tab.Screen name="Setting" component={SettingScreen} />
     </Tab.Navigator>
   );
 }
@@ -56,22 +62,22 @@ export default function App() {
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Screen 
-            name="MainTabs" 
-            component={TabNavigator} 
+          <Stack.Screen
+            name="MainTabs"
+            component={TabNavigator}
             options={{ headerShown: false }}
           />
-          <Stack.Screen 
-            name="Camera" 
-            component={CameraScreen} 
-            options={{ 
+          <Stack.Screen
+            name="Camera"
+            component={CameraScreen}
+            options={{
               headerShown: false,
             }}
           />
-          <Stack.Screen 
-            name="FoodDetails" 
-            component={FoodDetailsScreen} 
-            options={{ 
+          <Stack.Screen
+            name="FoodDetails"
+            component={FoodDetailsScreen}
+            options={{
               headerShown: false,
             }}
           />

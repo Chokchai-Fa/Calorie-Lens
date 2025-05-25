@@ -1,13 +1,18 @@
-import { View, Text, Image, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useSelector } from 'react-redux';
+import { View, Text, Image, ScrollView, TouchableOpacity, SafeAreaView, Share } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import BackButton from '../components/BackButton';
+import Card from '../components/Card';
+import { format } from 'date-fns';
+import { trackFood, removeTrackedFood } from '../store/imagesSlice';
 
-export function FoodDetailsScreen() {
+const FoodDetailsScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const { foodDetails, currentImage } = useSelector((state: any) => state.images);
   
-  if (!foodDetails) {
+  if (!foodDetails || !currentImage) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-white">
         <Text className="text-lg">No food details available</Text>
@@ -23,15 +28,37 @@ export function FoodDetailsScreen() {
 
   const { name, ingredients, calories } = foodDetails;
   
+  // Format the timestamp from currentImage
+  const formattedDate = format(
+    currentImage.timestamp,
+    'MMMM d, yyyy - h:mm a'
+  );
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `I just tracked ${name} with ${calories} calories using Food Tracker!`,
+        url: currentImage.uri
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
+  // Check if the current food item is already tracked
+  const isAlreadyTracked = currentImage.isTracked === true;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center px-4 py-2 border-b border-gray-200">
-        <TouchableOpacity onPress={() => navigation.navigate("MainTabs" as never)}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+      <View className="flex-row items-center justify-between px-4 py-2 border-b border-gray-200">
+        <View className="flex-row items-center flex-1">
+          <BackButton onPress={() => navigation.navigate("MainTabs" as never)} />
+          <Text className="ml-4 text-xl font-bold flex-1">Food Details</Text>
+        </View>
+        <TouchableOpacity onPress={handleShare}>
+          <Ionicons name="share-outline" size={24} color="#374151" />
         </TouchableOpacity>
-        <Text className="ml-4 text-xl font-bold flex-1">Food Details</Text>
       </View>
 
       <ScrollView className="flex-1">
@@ -46,38 +73,88 @@ export function FoodDetailsScreen() {
           </View>
         )}
 
-        {/* Food name */}
-        <View className="px-4 pt-4">
+        {/* Food name and timestamp */}
+        <Card style="mx-4 mt-4">
           <Text className="text-2xl font-bold">{name}</Text>
-        </View>
-        
-        {/* Calories information */}
-        <View className="px-4 mt-3">
-          <Text className="text-lg text-gray-700">{calories} calories</Text>
+          <Text className="text-lg text-gray-700 mt-1">{calories} calories</Text>
+          <Text className="text-sm text-gray-500 mt-2">{formattedDate}</Text>
           {foodDetails.portionInGrams && (
             <Text className="text-md text-gray-700 mt-1">Portion size: {foodDetails.portionInGrams}g</Text>
           )}
-        </View>
+        </Card>
 
         {/* Ingredients */}
-        <View className="px-4 mt-6">
-          <Text className="text-lg font-semibold mb-2">Ingredients:</Text>
+        <Card title="Ingredients" style="mx-4 mt-4">
           {ingredients.map((ingredient: string, index: number) => (
-            <View key={index} className="flex-row items-center mb-1">
+            <View key={index} className="flex-row items-center mb-2">
               <View className="h-2 w-2 rounded-full bg-gray-400 mr-2" />
-              <Text className="text-gray-800">{ingredient}</Text>
+              <Text className="text-gray-800 flex-1">{ingredient}</Text>
               {foodDetails.caloriesPerIngredient && foodDetails.caloriesPerIngredient[ingredient] && (
-                <Text className="text-gray-500 ml-2">
+                <Text className="text-gray-500">
                   ({foodDetails.caloriesPerIngredient[ingredient]} cal)
                 </Text>
               )}
             </View>
           ))}
-        </View>
+        </Card>
 
-        {/* Additional details can be added here */}
-        <View className="h-24" />
+        {/* Source Information */}
+        <Card title="Analysis Source" style="mx-4 my-4">
+          <View className="flex-row items-center">
+            <Ionicons name="analytics-outline" size={20} color="#4B5563" className="mr-2" />
+            <Text className="text-gray-700">Analysis provided by Gemini AI</Text>
+          </View>
+        </Card>
+
+        {/* Additional actions */}
+        <View className="mx-4 mt-2 mb-6">
+          {!isAlreadyTracked ? (
+            <TouchableOpacity
+              className="bg-green-500 rounded-xl py-4 items-center shadow-sm"
+              onPress={() => {
+                // Track the food item in Redux
+                dispatch(trackFood());
+                
+                // Show feedback to the user
+                alert(`${name} added to daily tracking!`);
+                
+                // Navigate back to main tabs
+                navigation.navigate("MainTabs" as never);
+              }}
+            >
+              <Text className="text-white font-semibold text-base">Add to Daily Tracking</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className="bg-red-500 rounded-xl py-4 items-center shadow-sm"
+              onPress={() => {
+                // Remove the food item from tracking in Redux with the current image timestamp
+                dispatch(removeTrackedFood(currentImage.timestamp));
+                
+                // Show feedback to the user
+                alert(`${name} removed from daily tracking!`);
+                
+                // Navigate back to main tabs
+                navigation.navigate("MainTabs" as never);
+              }}
+            >
+              <Text className="text-white font-semibold text-base">Remove from Tracking</Text>
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity
+            className="bg-gray-100 rounded-xl py-4 items-center shadow-sm mt-3"
+            onPress={() => {
+              // Logic to modify or adjust details
+              // This could navigate to an edit screen
+            }}
+          >
+            <Text className="text-gray-800 font-semibold text-base">Adjust Details</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+export default FoodDetailsScreen;

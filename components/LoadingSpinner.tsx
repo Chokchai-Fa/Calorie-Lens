@@ -6,11 +6,11 @@ interface LoadingSpinnerProps {
   color?: string;
 }
 
-export function LoadingSpinner({ 
+const LoadingSpinner = ({ 
   text = 'Loading...', 
   size = 'large', 
   color = '#0000ff' 
-}: LoadingSpinnerProps) {
+}: LoadingSpinnerProps) => {
   return (
     <View className="items-center justify-center bg-white/80 rounded-lg p-4">
       <ActivityIndicator size={size} color={color} />
@@ -18,3 +18,5 @@ export function LoadingSpinner({
     </View>
   );
 }
+
+export default LoadingSpinner;

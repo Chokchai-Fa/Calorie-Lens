@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import { useDispatch } from 'react-redux';
-import { addImage, startFoodAnalysis, setFoodDetails, setAnalysisError } from '../store/imagesSlice';
-import { analyzeFoodImage, uriToBase64 } from '../services/geminiService';
+import { addImage } from '../store/imagesSlice';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ImageConfirmationComponent from '../components/ImageConfirmation';
 
-export function CameraScreen() {
+const CameraScreen = () => {
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const navigation = useNavigation();
   const [isEmulator, setIsEmulator] = useState(false);
   const dispatch = useDispatch();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-
+  
   useEffect(() => {
     (async () => {
       // Check if running in an emulator
@@ -101,49 +101,6 @@ export function CameraScreen() {
     navigation.goBack();
   };
 
-  const analyzeWithGemini = async (imageUri: string) => {
-    if (!imageUri) return;
-    
-    try {
-      setAnalyzing(true);
-      dispatch(startFoodAnalysis());
-      
-      // Convert image URI to base64
-      console.log('Converting image to base64');
-      const base64Image = await uriToBase64(imageUri);
-      
-      // Call Gemini API to analyze the image
-      console.log('Calling Gemini API');
-      const result = await analyzeFoodImage(base64Image);
-      console.log('Gemini API response:', result);
-      
-      // Store food details in Redux
-      dispatch(setFoodDetails({
-        name: result.name,
-        ingredients: result.ingredients,
-        calories: result.calories,
-        caloriesPerIngredient: result.caloriesPerIngredient,
-        portionInGrams: result.portionInGrams,
-        imageUri: imageUri
-      }));
-      
-      // Navigate to Food Details screen
-      navigation.navigate('FoodDetails' as never);
-      
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      dispatch(setAnalysisError('Failed to analyze food image'));
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleAcceptImage = () => {
-    if (capturedImage) {
-      analyzeWithGemini(capturedImage);
-    }
-  };
-
   if (!cameraPermission) {
     return <View className="flex-1 justify-center items-center"><Text>Requesting camera permission...</Text></View>;
   }
@@ -165,32 +122,10 @@ export function CameraScreen() {
   return (
     <SafeAreaView className="flex-1 bg-black">
       {capturedImage ? (
-        <View className="flex-1 justify-center">
-          <Image source={{ uri: capturedImage }} className="flex-1" />
-          
-          {analyzing ? (
-            <View className="absolute bottom-10 w-full flex justify-center items-center">
-              <ActivityIndicator size="large" color="#ffffff" />
-              <Text className="text-white mt-2 text-center">Analyzing food...</Text>
-            </View>
-          ) : (
-            <View className="absolute bottom-10 w-full flex-row justify-center space-x-8">
-              <TouchableOpacity 
-                className="bg-white rounded-full p-4"
-                onPress={() => setCapturedImage(null)}
-              >
-                <Ionicons name="close" size={30} color="black" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                className="bg-green-500 rounded-full p-4"
-                onPress={handleAcceptImage}
-              >
-                <Ionicons name="checkmark" size={30} color="white" />
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        <ImageConfirmationComponent 
+          imageUri={capturedImage} 
+          onCancel={() => setCapturedImage(null)}
+        />
       ) : (
         <View className="flex-1">
           {isEmulator ? (
@@ -274,3 +209,5 @@ export function CameraScreen() {
     </SafeAreaView>
   );
 }
+
+export default CameraScreen;

@@ -1,47 +1,22 @@
 import { View, Text, Image, ScrollView, SafeAreaView, TouchableOpacity, FlatList } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { ScanButton } from '../components/ScanButton';
-import { NutritionStats } from '../components/Nutrition/NutritionStats';
-import { NutritionStat } from '../components/Nutrition/NutritionStats';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+import ScanButton from '../components/ScanButton';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { setCurrentImage } from '../store/imagesSlice';
-import { useState, useEffect } from 'react';
-import { addLoadingListener, removeLoadingListener } from '../services/geminiService';
+import { useLoading } from '../hooks/useLoading';
+import Card from '../components/Card';
 
-export function HubScreen() {
+const HubScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { images } = useSelector((state: RootState) => state.images);
-  const [isGeminiLoading, setIsGeminiLoading] = useState(false);
+  // Use the custom loading hook instead of managing the state directly
+  const isLoading = useLoading();
   
-  // Set up listener for Gemini loading state
-  useEffect(() => {
-    // Create a handler function for loading state changes
-    const handleLoadingChange = (isLoading: boolean) => {
-      setIsGeminiLoading(isLoading);
-    };
-    
-    // Register the handler
-    addLoadingListener(handleLoadingChange);
-    
-    // Cleanup: remove the listener when component unmounts
-    return () => {
-      removeLoadingListener(handleLoadingChange);
-    };
-  }, []);
-  
-  // Define nutrition stats data
-  const nutritionStats: NutritionStat[] = [
-    { type: 'iron', value: '19g' },
-    { type: 'energy', value: '20g' },
-    { type: 'shield', value: '7g' },
-    { type: 'flame', value: '12g' },
-    { type: 'fiber', value: '22g' }
-  ];
 
   const handleScanPress = () => {
     navigation.navigate('Camera' as never);
@@ -61,7 +36,7 @@ export function HubScreen() {
       <StatusBar style="dark" />
       
       {/* Loading overlay for Gemini API calls */}
-      {isGeminiLoading && (
+      {isLoading && (
         <View className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
           <LoadingSpinner text="Analyzing with Gemini..." color="#48bb78" />
         </View>
@@ -94,7 +69,7 @@ export function HubScreen() {
         </View>
 
         {/* Level Card */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-md">
+        <Card style="mt-2">
           <View className="flex-row items-center">
             <Text className="text-gray-800 font-bold">⭐ Level 5</Text>
             <Text className="text-green-500 ml-2">Vita-Voyager</Text>
@@ -105,16 +80,14 @@ export function HubScreen() {
             </View>
             <Text className="text-right text-xs text-gray-500 mt-1">620/1000</Text>
           </View>
-        </View>
+        </Card>
 
         {/* Images Gallery */}
         {images.length > 0 && (
-          <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-md">
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="font-bold text-gray-700">Recent Captures</Text>
-              <Text className="text-blue-500 text-sm">{images.length} {images.length === 1 ? 'image' : 'images'}</Text>
-            </View>
-            
+          <Card 
+            title="Recent Captures"
+            titleRight={<Text className="text-blue-500 text-sm">{images.length} {images.length === 1 ? 'image' : 'images'}</Text>}
+          >
             <FlatList
               data={images}
               keyExtractor={(item) => item.uri}
@@ -142,17 +115,14 @@ export function HubScreen() {
                 <Text className="text-gray-500 italic">No images captured yet</Text>
               }
             />
-          </View>
+          </Card>
         )}
-
-        {/* Nutrition Stats Component */}
-        <NutritionStats stats={nutritionStats} />
 
         {/* Scan Button Component */}
         <ScanButton onPress={handleScanPress} />
 
         {/* Active Quest */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-md">
+        <Card>
           <View className="flex-row">
             <FontAwesome5 name="scroll" size={20} color="#d69e2e" />
             <Text className="font-bold text-gray-700 ml-2">Active Quest:</Text>
@@ -160,7 +130,7 @@ export function HubScreen() {
           <Text className="font-bold text-gray-700 mt-1">The Fiberous Fields</Text>
           <Text className="text-green-500 text-sm">Consume 75g of Fiber today!</Text>
           <Text className="text-yellow-600 text-xs mt-1">Reward: +50 XP, +1 Vitamin Point</Text>
-        </View>
+        </Card>
 
         {/* Bottom Navigation */}
         <View className="h-16" />
@@ -168,3 +138,5 @@ export function HubScreen() {
     </SafeAreaView>
   );
 }
+
+export default HubScreen;

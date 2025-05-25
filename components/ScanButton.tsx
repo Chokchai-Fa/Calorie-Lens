@@ -4,7 +4,7 @@ interface ScanButtonProps{
   onPress?: () => void;
 };
 
-export function ScanButton({ onPress }: ScanButtonProps) {
+const ScanButton = ({ onPress }: ScanButtonProps) => {
   return (
     <TouchableOpacity 
       className="bg-yellow-400 mx-4 mt-6 rounded-xl p-4 shadow-md"
@@ -19,3 +19,5 @@ export function ScanButton({ onPress }: ScanButtonProps) {
     </TouchableOpacity>
   );
 }
+
+export default ScanButton;
