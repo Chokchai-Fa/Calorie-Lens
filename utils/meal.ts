@@ -49,13 +49,23 @@ export const organizeMealsByType = (trackedFoodItems: any[]): Record<MealType, M
     }
     
     // Add food item to appropriate meal category
+    // Handle both local and remote food item formats:
+    // Local format: item.foodDetails.name, item.foodDetails.calories
+    // Remote format: item.name, item.calories
+    const name = item.foodDetails ? item.foodDetails.name : item.name;
+    const calories = item.foodDetails ? item.foodDetails.calories : item.calories;
+    
+    if (!name) {
+      console.warn("Missing name for food item:", item);
+    }
+    
     meals[mealType].items.push({
-      name: item.foodDetails.name,
-      calories: item.foodDetails.calories
+      name: name || "Unknown food",
+      calories: calories || 0
     });
     
     // Update total calories for this meal
-    meals[mealType].totalCalories += item.foodDetails.calories;
+    meals[mealType].totalCalories += calories || 0;
     
     return meals;
   }, {} as Record<MealType, MealData>);
